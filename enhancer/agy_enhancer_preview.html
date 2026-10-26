@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-2 select-none">
+  <div class="flex flex-col items-center">
+    
+    <!-- 顶部宽度模拟切换条 -->
+    <div class="w-full mb-2 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--sidebar)] flex items-center justify-between text-xs gap-1 flex-wrap">
+      <span class="font-semibold">窗口宽度与 .md 提示词附件预览：</span>
+      <div class="flex items-center gap-1 flex-wrap">
+        <button onclick="setSimWidth(100)" id="w-100" class="px-2 py-0.5 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-medium">①宽屏(全显)</button>
+        <button onclick="setSimWidth(84)" id="w-84" class="px-2 py-0.5 rounded border border-[var(--border)]">②中屏(藏知识库)</button>
+        <button onclick="setSimWidth(70)" id="w-70" class="px-2 py-0.5 rounded border border-[var(--border)]">③窄屏(藏MCP+知识库)</button>
+        <button onclick="setSimWidth(56)" id="w-56" class="px-2 py-0.5 rounded border border-[var(--border)]">④极窄(仅剩2个按钮)</button>
+      </div>
+    </div>
+
+    <!-- 模拟 Antigravity 窗口 -->
+    <div id="sim-window" class="bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] rounded-xl shadow-sm overflow-hidden flex flex-col transition-all duration-200" style="width: 100%; height: 435px;">
+      
+      <!-- 顶部模拟 Antigravity 标题导航栏 -->
+      <div class="px-3 py-1.5 border-b border-[var(--border)] flex items-center justify-between text-xs text-[var(--muted-foreground)] bg-[var(--sidebar)] whitespace-nowrap overflow-hidden">
+        <div class="flex items-center gap-2 truncate">
+          <span class="font-bold text-[var(--foreground)]">Λ</span>
+          <span>◧</span>
+          <span>← → 🔍</span>
+          <span class="truncate text-[var(--foreground)]">1-电脑日常 / ALL-Agent技能库</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <span>⋮</span><span>▤</span><span>◨</span>
+        </div>
+      </div>
+
+      <!-- 中部主区域：模拟聊天内容 + 弹出浮层 + 右侧 Voyager 时间线 -->
+      <div class="relative flex-1 flex overflow-hidden">
+        <div class="flex-1 p-3 overflow-y-auto no-scrollbar space-y-2 text-xs" id="chat-area">
+          <div id="turn-1" class="p-2 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+            <div class="font-semibold">#1 查找本机是否安装了 wordcraft MCP</div>
+            <div class="text-[var(--muted-foreground)] mt-0.5 truncate">已安装并配置好 wordcraft MCP...</div>
+          </div>
+          <div id="turn-2" class="p-2 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+            <div class="font-semibold">#2 跨 Agent 共享技能库</div>
+            <div class="text-[var(--muted-foreground)] mt-0.5 truncate">已同步至 Antigravity / WorkBuddy / Cherry...</div>
+          </div>
+          <div id="turn-3" class="p-2 rounded-lg border-2 border-[var(--primary)] bg-[var(--background)]">
+            <div class="font-semibold">#3 长提示词以 .md 文档附件形式挂载（不污染输入框）</div>
+            <div class="text-[var(--muted-foreground)] mt-0.5">👉 请点击下方弹窗中的 <b>📄 工程管理系主任-任务指令架构师.md</b>，它会以<b>顶部附件卡片</b>形式挂载到输入框上方，输入框保持干净清爽！</div>
+          </div>
+        </div>
+
+        <!-- 右侧：Voyager 风格圆点对话时间线 -->
+        <div class="w-8 border-l border-[var(--border)] flex flex-col items-center justify-center relative py-3 bg-[var(--sidebar)] shrink-0">
+          <div class="w-0.5 flex-1 bg-[var(--border)] relative flex flex-col justify-between items-center py-2">
+            <div class="group relative flex items-center justify-center cursor-pointer" onclick="highlightTurn(1)">
+              <div id="node-1" class="w-2.5 h-2.5 rounded-full bg-[var(--muted-foreground)] hover:scale-125 transition-all"></div>
+              <div class="hidden group-hover:block absolute right-4 w-44 p-1.5 rounded-lg bg-[var(--card)] border border-[var(--border)] shadow-lg z-30 text-xs">
+                <div class="font-semibold">#1 查找 wordcraft MCP</div>
+              </div>
+            </div>
+            <div class="group relative flex items-center justify-center cursor-pointer" onclick="highlightTurn(2)">
+              <div id="node-2" class="w-2.5 h-2.5 rounded-full bg-[var(--muted-foreground)] hover:scale-125 transition-all"></div>
+              <div class="hidden group-hover:block absolute right-4 w-44 p-1.5 rounded-lg bg-[var(--card)] border border-[var(--border)] shadow-lg z-30 text-xs">
+                <div class="font-semibold">#2 跨 Agent 共享技能库</div>
+              </div>
+            </div>
+            <div class="group relative flex items-center justify-center cursor-pointer" onclick="highlightTurn(3)">
+              <div id="node-3" class="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20 hover:scale-125 transition-all"></div>
+              <div class="hidden group-hover:block absolute right-4 w-44 p-1.5 rounded-lg bg-[var(--card)] border border-[var(--border)] shadow-lg z-30 text-xs">
+                <div class="font-semibold text-emerald-500">#3 .md 提示词附件挂载</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 浮动面板区域 -->
+        <div id="popover-panel" class="absolute left-2 right-9 bottom-1.5 rounded-xl bg-[var(--card)] border border-[var(--border)] shadow-xl z-20 p-2.5 text-xs">
+          <!-- 动态渲染 -->
+        </div>
+      </div>
+
+      <!-- 底部：Antigravity 输入框（含顶部 .md 附件挂载区 + 干净输入区 + 单行自适应工具栏） -->
+      <div class="p-2 border-t border-[var(--border)] bg-[var(--background)]">
+        
+        <!-- 📎 .md 提示词附件卡片挂载区（点击提示词后在此显示紧凑附件胶囊，不把几千字塞进输入框！） -->
+        <div id="attachment-bar" class="flex items-center gap-1.5 mb-1.5 flex-wrap">
+          <!-- 动态挂载的 .md 附件芯片 -->
+        </div>
+
+        <!-- 输入框文本区 -->
+        <div class="px-2 py-1 rounded-lg bg-transparent flex items-center justify-between mb-1">
+          <input id="mock-input" type="text" value="" placeholder="提问任何问题（上方已挂载 .md 提示词附件，此处只需写您的具体任务）..." class="w-full bg-transparent outline-none text-xs text-[var(--foreground)]" />
+        </div>
+
+        <!-- 严格单行底部栏 -->
+        <div class="flex items-center justify-between gap-1 flex-nowrap whitespace-nowrap overflow-hidden">
+          <div class="flex items-center gap-1 flex-nowrap min-w-0 shrink-0">
+            <span class="px-1.5 py-0.5 text-xs text-[var(--muted-foreground)] font-bold shrink-0">+</span>
+            <select id="model-select" onchange="updateBadge()" class="py-0.5 bg-transparent text-xs text-[var(--foreground)] outline-none cursor-pointer shrink-0 max-w-[115px] truncate">
+              <option value="argon">Gemini 4 Argon Medium</option>
+              <option value="claude">Claude Sonnet 5.5</option>
+              <option value="gemini">Gemini 3.8 Pro</option>
+            </select>
+
+            <!-- 响应式插件按钮组 -->
+            <div class="flex items-center gap-0.5 px-1 py-0.5 rounded-md border border-dashed border-rose-500/70 bg-rose-500/5 flex-nowrap shrink-0">
+              <button onclick="openTab('skills')" id="btn-skills" class="px-1.5 py-0.5 rounded hover:bg-[var(--sidebar)] flex items-center gap-0.5 text-xs font-medium shrink-0">
+                <span>📦</span><span class="lbl-main">技能</span>
+              </button>
+              <button onclick="openTab('prompts')" id="btn-prompts" class="px-1.5 py-0.5 rounded hover:bg-[var(--sidebar)] flex items-center gap-0.5 text-xs font-medium shrink-0">
+                <span>✨</span><span class="lbl-sub">提示词</span>
+              </button>
+              <button onclick="openTab('mcp')" id="btn-mcp" class="px-1.5 py-0.5 rounded hover:bg-[var(--sidebar)] flex items-center gap-0.5 text-xs font-medium shrink-0">
+                <span>🔌</span><span class="lbl-sub">MCP</span>
+              </button>
+              <button onclick="openTab('kb')" id="btn-kb" class="px-1.5 py-0.5 rounded hover:bg-[var(--sidebar)] flex items-center gap-0.5 text-xs font-medium shrink-0">
+                <span>📚</span><span class="lbl-sub">知识库</span>
+              </button>
+              <button onclick="openTab('quota')" id="btn-quota" class="px-1.5 py-0.5 rounded-full border border-[var(--border)] bg-[var(--sidebar)] hover:border-[var(--primary)] flex items-center gap-1 text-xs shrink-0">
+                <span id="badge-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <span id="badge-text" class="font-mono">3轮·Argon 73%</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 右侧原生：🛡 极速 (Turbo) · 🎤 · ⏹ -->
+          <div class="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] shrink-0">
+            <span class="truncate max-w-[78px]">🛡 极速(Turbo)</span>
+            <span>🎤</span>
+            <span class="w-5 h-5 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-xs">■</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentWidthPct = 100;
+    let activeTab = 'prompts';
+    let attachedFiles = [
+      { name: "工程管理系主任-任务指令架构师.md", path: "E:/82-CherryStudio/ALL-Agent-Skills/_prompts/工程管理系主任-任务指令架构师.md", size: "4.2 KB" }
+    ];
+
+    const promptsData = [
+      {
+        title: "工程管理系主任-任务指令架构师.md",
+        tag: "系主任专版",
+        size: "4.2 KB · 168行",
+        path: "E:/82-CherryStudio/ALL-Agent-Skills/_prompts/工程管理系主任-任务指令架构师.md",
+        summary: "培养方案/课程大纲修订、达成度评价、专业评估认证、毕设与教学检查长任务指令架构师"
+      },
+      {
+        title: "深度方案追问审查.md",
+        tag: "架构",
+        size: "0.8 KB",
+        path: "E:/82-CherryStudio/ALL-Agent-Skills/_prompts/深度方案追问审查.md",
+        summary: "结合 /grill-me 逐层拆解设计决策树，直到达成共识"
+      }
+    ];
+
+    function renderAttachments() {
+      const bar = document.getElementById('attachment-bar');
+      if (attachedFiles.length === 0) {
+        bar.innerHTML = '';
+        return;
+      }
+      bar.innerHTML = attachedFiles.map((f, idx) => `
+        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/40 text-xs">
+          <span>📄</span>
+          <span class="font-medium text-[var(--foreground)]">${f.name}</span>
+          <span class="text-[var(--muted-foreground)]">(${f.size} · 已作为 .md 附件挂载)</span>
+          <button onclick="removeAttachment(${idx})" class="ml-1 text-[var(--muted-foreground)] hover:text-rose-500 font-bold" title="移除附件">×</button>
+        </div>
+      `).join('');
+    }
+
+    function attachPromptMd(idx) {
+      const p = promptsData[idx];
+      if (!attachedFiles.some(f => f.name === p.title)) {
+        attachedFiles.push({ name: p.title, path: p.path, size: p.size.split('·')[0].trim() });
+      }
+      renderAttachments();
+      document.getElementById('mock-input').focus();
+    }
+
+    function removeAttachment(idx) {
+      attachedFiles.splice(idx, 1);
+      renderAttachments();
+    }
+
+    function insertText(txt) {
+      const inp = document.getElementById('mock-input');
+      inp.value = txt;
+      inp.focus();
+    }
+
+    function setSimWidth(pct) {
+      currentWidthPct = pct;
+      document.getElementById('sim-window').style.width = pct + '%';
+
+      [100, 84, 70, 56].forEach(w => {
+        const b = document.getElementById('w-' + w);
+        b.className = (w === pct)
+          ? 'px-2 py-0.5 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-medium'
+          : 'px-2 py-0.5 rounded border border-[var(--border)]';
+      });
+
+      const btnKb = document.getElementById('btn-kb');
+      const btnMcp = document.getElementById('btn-mcp');
+      const btnPrompts = document.getElementById('btn-prompts');
+      const lblMain = document.querySelectorAll('.lbl-main');
+      const lblSub = document.querySelectorAll('.lbl-sub');
+
+      if (pct >= 95) {
+        btnKb.classList.remove('hidden');
+        btnMcp.classList.remove('hidden');
+        btnPrompts.classList.remove('hidden');
+        lblMain.forEach(l => l.classList.remove('hidden'));
+        lblSub.forEach(l => l.classList.remove('hidden'));
+      } else if (pct >= 80) {
+        btnKb.classList.add('hidden');
+        btnMcp.classList.remove('hidden');
+        btnPrompts.classList.remove('hidden');
+        lblMain.forEach(l => l.classList.remove('hidden'));
+        lblSub.forEach(l => l.classList.remove('hidden'));
+      } else if (pct >= 65) {
+        btnKb.classList.add('hidden');
+        btnMcp.classList.add('hidden');
+        btnPrompts.classList.remove('hidden');
+        lblMain.forEach(l => l.classList.remove('hidden'));
+        lblSub.forEach(l => l.classList.remove('hidden'));
+      } else {
+        btnKb.classList.add('hidden');
+        btnMcp.classList.add('hidden');
+        btnPrompts.classList.add('hidden');
+        lblMain.forEach(l => l.classList.add('hidden'));
+        lblSub.forEach(l => l.classList.add('hidden'));
+      }
+      updateBadge();
+    }
+
+    function updateBadge() {
+      const model = document.getElementById('model-select').value;
+      const txt = document.getElementById('badge-text');
+      const dot = document.getElementById('badge-dot');
+      const ultraNarrow = currentWidthPct < 65;
+      const wide = currentWidthPct >= 95;
+
+      if (model === 'argon') {
+        txt.textContent = ultraNarrow ? '73%' : (wide ? '3轮·Argon 73%' : 'Argon 73%');
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0';
+      } else if (model === 'claude') {
+        txt.textContent = ultraNarrow ? '43%' : (wide ? '3轮·Claude 43%' : 'Claude 43%');
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0';
+      } else {
+        txt.textContent = ultraNarrow ? '100%' : (wide ? '3轮·Gemini 100%' : 'Gemini 100%');
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0';
+      }
+    }
+
+    function openTab(tab, addingPrompt = false) {
+      activeTab = tab;
+      const panel = document.getElementById('popover-panel');
+      const navTabs = [
+        { id: 'skills', label: '📦 技能' },
+        { id: 'prompts', label: '✨ 提示词(.md附件)' },
+        { id: 'mcp', label: '🔌 MCP' },
+        { id: 'kb', label: '📚 知识库' },
+        { id: 'quota', label: '📊 配额(8轮)' }
+      ];
+      const navHtml = `
+        <div class="flex items-center justify-between gap-1 mb-2 pb-1.5 border-b border-[var(--border)] overflow-x-auto no-scrollbar whitespace-nowrap">
+          <div class="flex items-center gap-1">
+            ${navTabs.map(t => `
+              <button onclick="openTab('${t.id}')" class="px-2 py-0.5 rounded text-xs font-medium ${t.id === tab ? 'bg-[var(--primary)] text-[var(--primary-foreground)]' : 'hover:bg-[var(--sidebar)] text-[var(--muted-foreground)]'}">${t.label}</button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      let bodyHtml = '';
+      if (tab === 'prompts') {
+        if (addingPrompt) {
+          bodyHtml = `
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold">➕ 新建 .md 提示词文档 (保存在 ALL-Agent-Skills/_prompts/)</span>
+                <button onclick="openTab('prompts', false)" class="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">返回列表</button>
+              </div>
+              <div class="flex gap-1.5">
+                <input id="np-title" type="text" placeholder="文件名 (如：课程达成度评价提示词.md)" class="flex-1 px-2 py-1 rounded border border-[var(--border)] bg-[var(--background)] outline-none" />
+                <input id="np-tag" type="text" placeholder="标签 (如：教学)" class="w-24 px-2 py-1 rounded border border-[var(--border)] bg-[var(--background)] outline-none" />
+              </div>
+              <textarea id="np-body" rows="2" placeholder="粘贴长篇 Markdown 提示词内容，保存后自动生成独立 .md 文件..." class="w-full px-2 py-1 rounded border border-[var(--border)] bg-[var(--background)] outline-none"></textarea>
+              <div class="flex justify-end">
+                <button onclick="savePromptMd()" class="px-3 py-1 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-medium">💾 保存为 .md 文件并挂载</button>
+              </div>
+            </div>
+          `;
+        } else {
+          bodyHtml = `
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-center">
+                <span class="text-[var(--muted-foreground)]">点击即以 <b>📄 .md 附件卡片</b> 挂载，不把长文塞进输入框：</span>
+                <button onclick="openTab('prompts', true)" class="px-2 py-0.5 rounded bg-[var(--primary)] text-[var(--primary-foreground)] font-medium shrink-0">＋ 新建 .md 提示词</button>
+              </div>
+              ${promptsData.map((p, i) => `
+                <div onclick="attachPromptMd(${i})" class="p-2 rounded-lg border border-[var(--border)] hover:border-emerald-500 cursor-pointer bg-[var(--background)] flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span>📄</span>
+                      <span class="font-semibold truncate">${p.title}</span>
+                      <span class="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-500 shrink-0">${p.tag}</span>
+                      <span class="text-[var(--muted-foreground)] font-mono shrink-0">${p.size}</span>
+                    </div>
+                    <div class="text-[var(--muted-foreground)] truncate mt-0.5">${p.summary}</div>
+                  </div>
+                  <span class="px-2 py-1 rounded bg-[var(--sidebar)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] shrink-0 font-medium">📎 作为附件插入</span>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+      } else if (tab === 'quota') {
+        bodyHtml = `
+          <div class="grid grid-cols-3 gap-1.5">
+            <div class="p-1.5 rounded border border-[var(--border)] bg-[var(--background)] space-y-0.5">
+              <div class="font-semibold text-[var(--muted-foreground)]">Gemini 模型</div>
+              <div class="flex justify-between"><span>周限制</span><span class="font-mono font-bold text-emerald-500">100%</span></div>
+              <div class="flex justify-between"><span>5h限制</span><span class="font-mono font-bold text-emerald-500">100%</span></div>
+            </div>
+            <div class="p-1.5 rounded border border-[var(--border)] bg-[var(--background)] space-y-0.5">
+              <div class="font-semibold text-[var(--muted-foreground)]">Claude & GPT</div>
+              <div class="flex justify-between"><span>周限制</span><span class="font-mono font-bold text-amber-500">46%</span></div>
+              <div class="flex justify-between"><span>5h限制</span><span class="font-mono font-bold text-amber-500">43%</span></div>
+            </div>
+            <div class="p-1.5 rounded border border-[var(--border)] bg-[var(--background)] space-y-0.5 flex flex-col justify-between">
+              <div>
+                <div class="font-semibold text-[var(--muted-foreground)]">Gemini 4 Argon</div>
+                <div class="flex justify-between"><span>Weekly</span><span class="font-mono font-bold text-emerald-500">73%</span></div>
+              </div>
+              <button onclick="insertText('/compact')" class="w-full py-0.5 rounded border border-[var(--border)] hover:border-[var(--primary)] font-mono">/compact</button>
+            </div>
+          </div>
+        `;
+      } else if (tab === 'skills') {
+        bodyHtml = `
+          <div class="grid grid-cols-2 gap-1">
+            <div onclick="insertText('/wordcraft ')" class="p-1.5 rounded border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer bg-[var(--background)] truncate"><b>/wordcraft</b> 文档处理</div>
+            <div onclick="insertText('/transfer-skills ')" class="p-1.5 rounded border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer bg-[var(--background)] truncate"><b>/transfer-skills</b> 技能同步</div>
+            <div onclick="insertText('/grill-me ')" class="p-1.5 rounded border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer bg-[var(--background)] truncate"><b>/grill-me</b> 追问审查</div>
+            <div onclick="insertText('/prompt-engineering-patterns ')" class="p-1.5 rounded border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer bg-[var(--background)] truncate"><b>/prompt-eng</b> 提示词工程</div>
+          </div>
+        `;
+      } else if (tab === 'mcp') {
+        bodyHtml = `
+          <div class="space-y-1">
+            <div class="text-emerald-500 font-semibold">● wordcraft (16 工具运行中)</div>
+            <div class="flex flex-wrap gap-1">
+              <button onclick="insertText('请使用 wordcraft 的 new_document 工具：')" class="px-2 py-0.5 rounded border border-[var(--border)] hover:border-[var(--primary)] bg-[var(--background)]">new_document</button>
+              <button onclick="insertText('请使用 wordcraft 的 open_document 工具：')" class="px-2 py-0.5 rounded border border-[var(--border)] hover:border-[var(--primary)] bg-[var(--background)]">open_document</button>
+              <button onclick="insertText('请使用 wordcraft 的 save_document 工具：')" class="px-2 py-0.5 rounded border border-[var(--border)] hover:border-[var(--primary)] bg-[var(--background)]">save_document</button>
+            </div>
+          </div>
+        `;
+      } else if (tab === 'kb') {
+        bodyHtml = `
+          <div class="space-y-1">
+            <div onclick="insertText('请参考 E:/82-CherryStudio/1-工作空间/1-全能助手/1-知识库/wiki/06-Skills-and-Capability-Packs.md ：')" class="p-1.5 rounded border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer bg-[var(--background)] truncate">📄 06-Skills-and-Capability-Packs.md</div>
+            <div onclick="insertText('请参考 e:/83-Antigravity/1-工作空间/1-电脑日常/GEMINI.md ：')" class="p-1.5 rounded border border-[var(--border)] hover:border-[var(--primary)] cursor-pointer bg-[var(--background)] truncate">📄 GEMINI.md (当前工作区长期记忆)</div>
+          </div>
+        `;
+      }
+
+      panel.innerHTML = navHtml + bodyHtml;
+    }
+
+    function savePromptMd() {
+      let t = document.getElementById('np-title').value.trim() || '自定义长提示词.md';
+      if (!t.endsWith('.md')) t += '.md';
+      const g = document.getElementById('np-tag').value.trim() || '通用';
+      const b = document.getElementById('np-body').value.trim() || '# 角色与任务定义...';
+      promptsData.unshift({
+        title: t,
+        tag: g,
+        size: (Math.max(0.5, (b.length / 1024)).toFixed(1)) + ' KB',
+        path: 'E:/82-CherryStudio/ALL-Agent-Skills/_prompts/' + t,
+        summary: b.slice(0, 60)
+      });
+      attachPromptMd(0);
+      openTab('prompts', false);
+    }
+
+    function highlightTurn(n) {
+      [1,2,3].forEach(i => {
+        const el = document.getElementById('turn-' + i);
+        const nd = document.getElementById('node-' + i);
+        if (i === n) {
+          el.className = 'p-2 rounded-lg border-2 border-[var(--primary)] bg-[var(--background)]';
+          nd.className = 'w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20 transition-all';
+        } else {
+          el.className = 'p-2 rounded-lg border border-[var(--border)] bg-[var(--background)]';
+          nd.className = 'w-2.5 h-2.5 rounded-full bg-[var(--muted-foreground)] transition-all';
+        }
+      });
+    }
+
+    renderAttachments();
+    openTab('prompts');
+    setSimWidth(100);
+  </script>
+</body>
+</html>
