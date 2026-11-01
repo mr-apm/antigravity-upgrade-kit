@@ -5,7 +5,7 @@ Antigravity 一键全自动升级补丁套件 (Unified Upgrade Kit)
 功能：
   1. 联网检查/拉取 GitHub 最新版 Antigravity 中文汉化包 (qqxpee/antigravity2-cn)
   2. 自动调用 localization_engine.js 完成官方界面、菜单、设置等全面深度汉化
-  3. 保留并增强 Antigravity 官方原生对话时间线导航 (Conversation Navigator)
+  3. 纯净保留 Antigravity 官方原生对话时间线导航 (Conversation Navigator 与原厂对话卡片，杜绝重叠弹窗)
   4. 自动注入 UI Enhancer 增强层：
      - 底部快捷气泡工具栏 (技能、提示词、MCP、知识库、配额)
      - 技能点击自动插入为原生 [ <> ] 胶囊徽章 (BeautifulMention Pill Node)
