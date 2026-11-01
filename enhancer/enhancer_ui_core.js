@@ -4,6 +4,10 @@
         window.__AGY_UI_ENHANCER_TIMER__ = null;
     }
     window.__AGY_UI_ENHANCER_ACTIVE__ = true;
+    try {
+        const _oldTl = document.getElementById('agy-enhancer-timeline');
+        if (_oldTl) _oldTl.remove();
+    } catch (e) {}
 
     // Default fallback data (used if IPC is not yet active before app restart)
     const FALLBACK_DATA = window.__AGY_ENHANCER_BOOTSTRAP_DATA__ || {
@@ -59,7 +63,6 @@
         addingPrompt: false,
         attachedChips: [],
         lastConvoId: '',
-        lastTimelineFingerprint: '',
         widthTier: 1 // 1: full, 2: hide kb, 3: hide mcp+kb, 4: compact 2 buttons
     };
 
@@ -75,6 +78,10 @@
     } catch (e) {}
 
     function injectStyles() {
+        try {
+            const _oldTl = document.getElementById('agy-enhancer-timeline');
+            if (_oldTl) _oldTl.remove();
+        } catch (e) {}
         if (document.getElementById('__agy_enhancer_styles__')) return;
         const style = document.createElement('style');
         style.id = '__agy_enhancer_styles__';
@@ -306,77 +313,43 @@
             .agy-btn-primary:hover {
                 opacity: 0.92;
             }
-            /* Right-side Voyager Conversation Timeline */
-            #agy-enhancer-timeline {
+                        #agy-native-turn-tooltip {
                 position: fixed;
-                right: 6px;
-                top: 86px;
-                bottom: 130px;
-                width: 18px;
-                z-index: 45;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                pointer-events: none;
-            }
-            .agy-tl-track {
-                width: 2px;
-                height: 100%;
-                max-height: 460px;
-                background: rgba(128, 128, 128, 0.22);
-                border-radius: 9999px;
-                position: relative;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                align-items: center;
-                padding: 6px 0;
-                pointer-events: auto;
-            }
-            .agy-tl-node-wrap {
-                position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 16px;
-                height: 14px;
-                cursor: pointer;
-            }
-            .agy-tl-dot {
-                width: 8px;
-                height: 8px;
-                border-radius: 9999px;
-                background: rgba(128, 128, 128, 0.65);
-                transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
-            }
-            .agy-tl-node-wrap:hover .agy-tl-dot,
-            .agy-tl-node-wrap.active .agy-tl-dot {
-                transform: scale(1.35);
-                background: #10b981;
-                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22);
-            }
-            .agy-tl-tooltip {
-                display: none;
-                position: absolute;
-                right: 22px;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 250px;
-                padding: 8px 10px;
+                z-index: 99999;
+                width: 270px;
+                padding: 8px 12px;
                 border-radius: 9px;
-                border: 1px solid rgba(128, 128, 128, 0.3);
+                border: 1px solid rgba(128, 128, 128, 0.28);
                 background: var(--card, #1e1e1e);
                 color: var(--foreground, #f3f4f6);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-                font-size: 11.5px;
-                line-height: 1.4;
-                z-index: 9999;
-                pointer-events: auto;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+                font-family: inherit;
+                pointer-events: none;
+                transition: opacity 0.12s ease;
             }
-            .agy-tl-node-wrap:hover .agy-tl-tooltip {
-                display: block;
+
+/* Antigravity 官方原生对话时间线导航保留与增强 */
+            [data-testid="conversation-navigator"] {
+                visibility: visible !important;
+                pointer-events: auto !important;
             }
+            [data-testid="conversation-navigator"] ol {
+                pointer-events: auto !important;
+                opacity: 0.75;
+                transition: opacity 0.2s ease, transform 0.2s ease;
+            }
+            [data-testid="conversation-navigator"]:hover ol,
+            [data-testid="conversation-navigator"] ol:hover {
+                opacity: 1 !important;
+            }
+            [data-testid="conversation-navigator-turn"] {
+                cursor: pointer !important;
+            }
+            [data-testid="conversation-navigator-turn"]:hover span {
+                background-color: #10b981 !important;
+                transform: scale(1.35) !important;
+            }
+            
         `;
         document.head.appendChild(style);
     }
@@ -401,7 +374,6 @@
                 }
             } catch (e) {}
         }
-        renderTimeline();
         updateQuotaBadge();
     }
 
@@ -649,126 +621,24 @@
         });
     }
 
-    function getLiveFiberTurns() {
+    function getLiveTurnCount() {
         try {
             const vp = document.querySelector('[data-testid="autoscroll-viewport"]');
-            if (!vp) return null;
-            const fk = Object.keys(vp).find(k => k.startsWith('__reactFiber$'));
-            let cur = fk ? vp[fk] : null;
-            for (let i = 0; i < 35 && cur; i++) {
-                if (cur.memoizedProps?.turns && Array.isArray(cur.memoizedProps.turns)) {
-                    return {
-                        turns: cur.memoizedProps.turns,
-                        navigateTo: typeof cur.memoizedProps.navigateTo === 'function' ? cur.memoizedProps.navigateTo : null
-                    };
+            if (vp) {
+                const fk = Object.keys(vp).find(k => k.startsWith('__reactFiber$'));
+                let cur = fk ? vp[fk] : null;
+                for (let i = 0; i < 35 && cur; i++) {
+                    if (cur.memoizedProps?.turns && Array.isArray(cur.memoizedProps.turns)) {
+                        return cur.memoizedProps.turns.length;
+                    }
+                    cur = cur.return;
                 }
-                cur = cur.return;
             }
         } catch (e) {}
-        return null;
-    }
-
-    function getChatPagination() {
-        try {
-            const vp = document.querySelector('[data-testid="autoscroll-viewport"]');
-            if (!vp) return null;
-            const fk = Object.keys(vp).find(k => k.startsWith('__reactFiber$'));
-            let cur = fk ? vp[fk] : null;
-            let pagFiber = null;
-
-            function findPag(node, depth = 0) {
-                if (!node || depth > 30 || pagFiber) return;
-                const p = node.memoizedProps;
-                if (p && p.paginationRef?.current && p.sectionRefsMap?.current) {
-                    pagFiber = node;
-                    return;
-                }
-                findPag(node.child, depth + 1);
-                findPag(node.sibling, depth);
-            }
-            findPag(cur);
-
-            if (!pagFiber) {
-                let parent = cur;
-                while (parent && !pagFiber) {
-                    const p = parent.memoizedProps;
-                    if (p && p.paginationRef?.current && p.sectionRefsMap?.current) {
-                        pagFiber = parent;
-                        break;
-                    }
-                    parent = parent.return;
-                }
-            }
-            if (!pagFiber) return null;
-
-            const p = pagFiber.memoizedProps;
-            return {
-                pagination: p.paginationRef.current,
-                sectionRefsMap: p.sectionRefsMap.current,
-                trajectorySlice: p.trajectorySlice || null,
-                viewport: vp
-            };
-        } catch (e) {
-            return null;
-        }
-    }
-
-    function getActiveTurnsList() {
-        const cid = getConversationId();
-        const live = getLiveFiberTurns();
-
-        let textMap = {};
-        if (cid) {
-            try {
-                textMap = JSON.parse(localStorage.getItem('__agy_turn_texts_' + cid) || '{}');
-            } catch (e) {}
-        }
-        const byStepMap = {};
-        const byNumMap = {};
-        if (Array.isArray(state.data.turns)) {
-            for (const bt of state.data.turns) {
-                if (bt.turnNumber && bt.text) {
-                    byNumMap[bt.turnNumber] = bt.text;
-                    textMap[bt.turnNumber] = bt.text;
-                }
-                if (typeof bt.stepIndex === 'number' && bt.text) {
-                    byStepMap[bt.stepIndex] = bt.text;
-                }
-            }
-        }
-
-        // Cache into localStorage
-        if (cid && Object.keys(textMap).length > 0) {
-            try {
-                localStorage.setItem('__agy_turn_texts_' + cid, JSON.stringify(textMap));
-            } catch (e) {}
-        }
-
-        if (live && live.turns && live.turns.length > 0) {
-            return live.turns.map((t, idx) => {
-                const turnNum = idx + 1; // Strictly sequential 1-based turn number (never use revision!)
-                const timeStr = t.startTimeMs ? new Date(t.startTimeMs).toLocaleTimeString() : '';
-                const summary = byStepMap[t.startStepIndex] || byNumMap[turnNum] || textMap[turnNum] || (timeStr ? `提问时间: ${timeStr}` : `第 ${turnNum} 轮提问`);
-                return {
-                    turnNumber: turnNum,
-                    startStepIndex: t.startStepIndex,
-                    startTimeMs: t.startTimeMs,
-                    timeStr: timeStr,
-                    text: summary
-                };
-            });
-        }
-
         if (Array.isArray(state.data.turns) && state.data.turns.length > 0) {
-            return state.data.turns.map((t, idx) => ({
-                turnNumber: idx + 1,
-                startStepIndex: t.stepIndex ?? t.startStepIndex,
-                timeStr: t.createdAt ? new Date(t.createdAt).toLocaleTimeString() : '',
-                text: t.text || `第 ${idx + 1} 轮提问`
-            }));
+            return state.data.turns.length;
         }
-
-        return [];
+        return 1;
     }
 
     function updateQuotaBadge() {
@@ -780,8 +650,7 @@
         const dotColor = pct >= 60 ? '#10b981' : (pct >= 25 ? '#f59e0b' : '#ef4444');
         if (dot.style.background !== dotColor) dot.style.background = dotColor;
 
-        const turnsList = getActiveTurnsList();
-        const turnsCount = Math.max(turnsList.length, 1);
+        const turnsCount = Math.max(getLiveTurnCount(), 1);
 
         let nextText = '';
         if (state.widthTier >= 4) {
@@ -1168,8 +1037,7 @@
             });
         } else if (state.activeTab === 'quota') {
             const qInfo = readLiveModelQuotas();
-            const activeTurns = getActiveTurnsList();
-            const turnsCount = Math.max(activeTurns.length, state.data.turns.length, 1);
+            const turnsCount = Math.max(getLiveTurnCount(), 1);
             body.innerHTML = `
                 <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;">
                     ${qInfo.models.map(m => {
@@ -1204,147 +1072,67 @@
         }
     }
 
-    // Component 2: Right-side Voyager Conversation Timeline
-    function renderTimeline() {
-        const cv = document.querySelector('[data-testid="conversation-view"]');
-        if (!cv) {
-            const old = document.getElementById('agy-enhancer-timeline');
-            if (old) old.remove();
-            state.lastTimelineFingerprint = '';
+    
+    // Antigravity 原生时间线悬浮对话预览卡片 (Native Turn Tooltip)
+    let activeTurnTip = null;
+    function hideTurnTooltip() {
+        if (activeTurnTip) {
+            activeTurnTip.remove();
+            activeTurnTip = null;
+        }
+    }
+
+    document.addEventListener('mouseover', (e) => {
+        const btn = e.target.closest('[data-testid="conversation-navigator-turn"]');
+        if (!btn) {
+            hideTurnTooltip();
             return;
         }
 
-        const turnsList = getActiveTurnsList();
-        if (turnsList.length === 0) {
-            const old = document.getElementById('agy-enhancer-timeline');
-            if (old) old.remove();
-            state.lastTimelineFingerprint = '';
-            return;
+        const idxStr = btn.getAttribute('data-turn-index');
+        if (idxStr == null) return;
+        const turnIdx = Number(idxStr);
+        const turnNum = turnIdx + 1;
+
+        const turnsData = state.data.turns || [];
+        const turnItem = turnsData[turnIdx] || turnsData.find(t => t.turnNumber === turnNum);
+
+        let text = turnItem?.text || '';
+        let timeStr = '';
+        if (turnItem?.createdAt) {
+            try { timeStr = new Date(turnItem.createdAt).toLocaleTimeString(); } catch (err) {}
+        }
+        if (!timeStr) {
+            timeStr = btn.getAttribute('aria-label') || '';
         }
 
-        let tl = document.getElementById('agy-enhancer-timeline');
-        if (!tl) {
-            tl = document.createElement('div');
-            tl.id = 'agy-enhancer-timeline';
-            document.body.appendChild(tl);
+        if (!activeTurnTip) {
+            activeTurnTip = document.createElement('div');
+            activeTurnTip.id = 'agy-native-turn-tooltip';
+            document.body.appendChild(activeTurnTip);
         }
 
-        const displayTurns = turnsList.length > 24
-            ? turnsList.filter((_, idx) => idx === 0 || idx === turnsList.length - 1 || idx % Math.ceil(turnsList.length / 22) === 0)
-            : turnsList;
-
-        const fingerprint = `${turnsList.length}:${displayTurns.map(t => `${t.turnNumber}_${(t.text || '').slice(0, 15)}`).join('|')}`;
-        if (state.lastTimelineFingerprint === fingerprint && tl.querySelector('.agy-tl-track')) {
-            return;
-        }
-        state.lastTimelineFingerprint = fingerprint;
-
-        tl.innerHTML = `
-            <div class="agy-tl-track">
-                ${displayTurns.map((t, i) => `
-                    <div class="agy-tl-node-wrap ${i === displayTurns.length - 1 ? 'active' : ''}" data-turn-num="${t.turnNumber}" data-turn-step="${t.startStepIndex ?? ''}" data-turn-total="${turnsList.length}">
-                        <div class="agy-tl-dot"></div>
-                        <div class="agy-tl-tooltip">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-                                <span style="font-weight:700;color:#10b981;">#${t.turnNumber} 轮提问</span>
-                                <span style="font-size:10px;opacity:0.65;">${t.timeStr || '点击跳转定位'}</span>
-                            </div>
-                            <div style="opacity:0.9;word-break:break-word;max-height:66px;overflow:hidden;">${(t.text || '').replace(/</g, '&lt;')}</div>
-                        </div>
-                    </div>
-                `).join('')}
+        activeTurnTip.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:12px;">
+                <span style="font-weight:700;color:#10b981;font-size:12px;">#${turnNum} 轮提问</span>
+                <span style="font-size:10px;opacity:0.65;">${timeStr}</span>
+            </div>
+            <div style="font-size:11.5px;line-height:1.45;opacity:0.9;word-break:break-word;max-height:88px;overflow:hidden;">
+                ${(text || `第 ${turnNum} 轮提问`).replace(/</g, '&lt;')}
             </div>
         `;
 
-        tl.querySelectorAll('.agy-tl-node-wrap').forEach(node => {
-            node.onclick = async (e) => {
-                e.stopPropagation();
-                const num = Number(node.getAttribute('data-turn-num'));
-                const stepIdx = Number(node.getAttribute('data-turn-step'));
-                const total = Number(node.getAttribute('data-turn-total')) || 1;
+        const rect = btn.getBoundingClientRect();
+        activeTurnTip.style.left = (rect.right + 10) + 'px';
+        activeTurnTip.style.top = Math.max(10, Math.min(window.innerHeight - 110, rect.top - 20)) + 'px';
+    });
 
-                // Visual click feedback
-                node.style.transform = 'scale(1.35)';
-                setTimeout(() => { node.style.transform = ''; }, 300);
-
-                const chatPag = getChatPagination();
-                const isLatest = num === total;
-
-                function highlightElement(el) {
-                    if (!el) return false;
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.style.transition = 'box-shadow 0.3s, background 0.3s';
-                    el.style.boxShadow = '0 0 0 2px #10b981';
-                    el.style.borderRadius = '8px';
-                    setTimeout(() => { el.style.boxShadow = ''; }, 2000);
-                    return true;
-                }
-
-                // 1. If clicking latest turn, reattach to live bottom stream
-                if (isLatest && chatPag?.pagination?.reattach) {
-                    try {
-                        chatPag.pagination.reattach();
-                        if (chatPag.viewport) {
-                            chatPag.viewport.scrollTo({ top: chatPag.viewport.scrollHeight, behavior: 'smooth' });
-                        }
-                        return;
-                    } catch (err) {}
-                }
-
-                // 2. Check if already mounted in sectionRefsMap
-                if (chatPag?.sectionRefsMap) {
-                    for (const [k, v] of chatPag.sectionRefsMap.entries()) {
-                        if (v.startIndex <= stepIdx && stepIdx < v.endIndexExclusive && v.element) {
-                            highlightElement(v.element);
-                            return;
-                        }
-                    }
-                }
-
-                // 3. Check if matching DOM element exists
-                const targetTurn = turnsList.find(x => x.turnNumber === num);
-                const domSteps = Array.from(document.querySelectorAll('[data-testid="user-input-step"]'));
-                const snippet = (targetTurn?.text || '').slice(0, 32).trim();
-                const matchedDom = snippet ? domSteps.find(el => (el.innerText || '').includes(snippet)) : null;
-                if (matchedDom && highlightElement(matchedDom)) {
-                    return;
-                }
-
-                // 4. Use native paginationRef.navigateTo to fetch and mount the historical slice
-                if (chatPag?.pagination?.navigateTo && !isNaN(stepIdx)) {
-                    try {
-                        await chatPag.pagination.navigateTo(stepIdx);
-                        // Poll for the section element to mount in the new slice
-                        for (let attempt = 0; attempt < 25; attempt++) {
-                            await new Promise(r => setTimeout(r, 70));
-                            const freshPag = getChatPagination();
-                            if (freshPag?.sectionRefsMap) {
-                                for (const [k, v] of freshPag.sectionRefsMap.entries()) {
-                                    if (v.startIndex <= stepIdx && stepIdx < v.endIndexExclusive && v.element) {
-                                        highlightElement(v.element);
-                                        return;
-                                    }
-                                }
-                            }
-                            const freshSteps = Array.from(document.querySelectorAll('[data-testid="user-input-step"]'));
-                            const m = snippet ? freshSteps.find(el => (el.innerText || '').includes(snippet)) : null;
-                            if (m && highlightElement(m)) return;
-                        }
-                    } catch (err) {}
-                }
-
-                // 5. Fallback: viewport ratio scroll
-                const viewport = document.querySelector('[data-testid="autoscroll-viewport"]');
-                if (viewport) {
-                    const ratio = total <= 1 ? 1 : (num - 1) / (total - 1);
-                    viewport.scrollTo({
-                        top: Math.max(0, (viewport.scrollHeight - viewport.clientHeight) * ratio),
-                        behavior: 'smooth'
-                    });
-                }
-            };
-        });
-    }
+    document.addEventListener('mouseout', (e) => {
+        const btn = e.target.closest('[data-testid="conversation-navigator-turn"]');
+        if (btn) {
+            hideTurnTooltip();
+        }
+    });
 
     document.addEventListener('click', (e) => {
         if (state.popoverOpen) {
@@ -1361,11 +1149,9 @@
         const cid = getConversationId();
         if (cid && cid !== state.lastConvoId) {
             state.lastConvoId = cid;
-            state.lastTimelineFingerprint = '';
             state.data.turns = [];
             syncBackendData();
         } else {
-            renderTimeline();
             updateQuotaBadge();
         }
     }

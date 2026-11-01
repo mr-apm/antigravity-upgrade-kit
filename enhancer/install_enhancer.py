@@ -11,6 +11,12 @@ Antigravity UI Enhancer — 一键注入安装脚本 (支持跨电脑迁移 + �
 import os
 import re
 import sys
+if sys.stdout and sys.stdout.encoding != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 import json
 import shutil
 import socket
@@ -372,8 +378,7 @@ def hot_inject_via_cdp(ui_core_js, bootstrap_data):
             {ui_core_js}
             return {{
                 toolbarMounted: !!document.getElementById('agy-enhancer-toolbar'),
-                timelineMounted: !!document.getElementById('agy-enhancer-timeline'),
-                turnsCount: {len(bootstrap_data.get('turns', []))},
+                                turnsCount: {len(bootstrap_data.get('turns', []))},
                 promptsCount: {len(bootstrap_data.get('prompts', []))},
                 skillsCount: {len(bootstrap_data.get('skills', []))}
             }};

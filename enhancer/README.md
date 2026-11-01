@@ -1,6 +1,6 @@
-# Antigravity UI Enhancer（底部快捷工具栏 + 右侧对话时间线）
+# Antigravity UI Enhancer（底部快捷工具栏 + 原生技能胶囊）
 
-本目录（`E:\82-CherryStudio\ALL-Agent-Skills\_agy-enhancer\`）为 **Antigravity UI 增强插件独立便携包**，支持在本机及任何其他 Windows 电脑上一键注入、热生效与一键恢复原版。
+本目录为 **Antigravity UI 增强插件独立便携包**，支持在本机及任何其他 Windows 电脑上一键注入、热生效与一键恢复原版。
 
 ---
 
@@ -15,17 +15,17 @@
      - **极窄窗口 (`<370px`)**：自动精简为 **`[📦]` + `[🟢 XX%]`** 两个紧凑按钮
    - 点击任意按钮均弹出 **5 合 1 悬浮面板（`📦 技能 | ✨ 提示词 | 🔌 MCP | 📚 知识库 | 📊 配额`）**，每个面板均内置 **实时搜索框 (`🔍`)** 与 **独立上下滚动条**。
 
-2. **组件 2：右侧 Voyager 风格对话时间线（`#agy-enhancer-timeline`）**
-   - 自动读取当前对话完整轮次历史（`transcript.jsonl` + 实时 DOM 节点追踪），不受虚拟列表滚动裁剪影响。
-   - 鼠标悬停圆点可预览该轮提问内容，点击圆点即可平滑滚动定位到对应提问位置。
+2. **组件 2：原生技能胶囊徽章（BeautifulMention Pill Node）**
+   - 突破 Lexical 协议层，气泡中的技能点击后直接在输入框生成官方原生 `[ <> ] 技能名` 胶囊徽章。
+   - 与手动敲击 `/` 选择完全一致，支持退格一键整块删除。
 
 3. **组件 3：`.md` 附件式提示词库 + 新建保存**
    - 长提示词以独立 `.md` 文件存放在 `_prompts` 目录（如 `E:\82-CherryStudio\ALL-Agent-Skills\_prompts\`，跨电脑无此目录时自动回退至 `~/.gemini/antigravity/_prompts/`）。
    - 点击任一提示词，通过原生 `<input type="file">` 挂载为 **`.md` 文档附件**，不会把几千字正文灌入输入框。
    - 支持点击 **`＋ 新建 .md`** 直接输入文件名、标签和正文并保存为 `.md` 文件。
 
-4. **实时模型配额胶囊与 3 组配额面板**
-   - 底部胶囊采用**方式 ①（智能跟随当前选中模型）**，直接从 Antigravity 内部状态读取真实剩余配额百分比。
+4. **组件 4：实时模型配额胶囊与 3 组配额面板**
+   - 底部胶囊采用**智能跟随当前选中模型**，直接从 Antigravity 内部 React Fiber 状态读取真实剩余配额百分比。
    - 点击打开 `📊 配额` 面板可查看 `Gemini 4 Argon`、`Gemini 3.8 模型`、`Claude & GPT` 全部配额进度条、重置倒计时、当前对话轮数，并提供 `/compact` 一键压缩上下文按钮。
 
 ---
@@ -33,17 +33,17 @@
 ## 二、一键注入指令与一键恢复指令
 
 ### 方式 A：双击批处理文件（最简单）
-- **一键注入安装**：双击运行 [`一键注入插件.bat`](file:///E:/82-CherryStudio/ALL-Agent-Skills/_agy-enhancer/一键注入插件.bat)
-- **一键恢复原版**：双击运行 [`一键恢复原版.bat`](file:///E:/82-CherryStudio/ALL-Agent-Skills/_agy-enhancer/一键恢复原版.bat)
+- **一键注入安装**：双击运行 `一键注入插件.bat`
+- **一键恢复原版**：双击运行 `一键恢复原版.bat`
 
 ### 方式 B：PowerShell / 终端一键指令
 - **一键注入指令**：
   ```powershell
-  python "E:\82-CherryStudio\ALL-Agent-Skills\_agy-enhancer\install_enhancer.py"
+  python install_enhancer.py
   ```
 - **一键恢复原版指令**：
   ```powershell
-  python "E:\82-CherryStudio\ALL-Agent-Skills\_agy-enhancer\restore_original.py"
+  python restore_original.py
   ```
 
 ---

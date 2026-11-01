@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
-title Antigravity 一键升级套件 (GitHub最新汉化 + 时间线 + 气泡胶囊)
+title Antigravity 一键升级套件 (GitHub最新汉化 + 气泡胶囊)
 
 echo ====================================================================
-echo   Antigravity 一键全自动升级套件 (GitHub最新汉化 + 时间线 + 气泡胶囊)
+echo   Antigravity 一键全自动升级套件 (GitHub最新汉化 + 气泡胶囊)
 echo ====================================================================
 echo.
 
