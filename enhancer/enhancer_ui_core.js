@@ -7,6 +7,8 @@
     try {
         const _oldTl = document.getElementById('agy-enhancer-timeline');
         if (_oldTl) _oldTl.remove();
+        const oldTip = document.getElementById('agy-native-turn-tooltip');
+        if (oldTip) oldTip.remove();
     } catch (e) {}
 
     // Default fallback data (used if IPC is not yet active before app restart)
@@ -313,22 +315,8 @@
             .agy-btn-primary:hover {
                 opacity: 0.92;
             }
-                        #agy-native-turn-tooltip {
-                position: fixed;
-                z-index: 99999;
-                width: 270px;
-                padding: 8px 12px;
-                border-radius: 9px;
-                border: 1px solid rgba(128, 128, 128, 0.28);
-                background: var(--card, #1e1e1e);
-                color: var(--foreground, #f3f4f6);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-                font-family: inherit;
-                pointer-events: none;
-                transition: opacity 0.12s ease;
-            }
 
-/* Antigravity 官方原生对话时间线导航保留与增强 */
+            /* Antigravity 官方原生对话时间线导航保留与增强 */
             [data-testid="conversation-navigator"] {
                 visibility: visible !important;
                 pointer-events: auto !important;
@@ -1072,67 +1060,7 @@
         }
     }
 
-    
-    // Antigravity 原生时间线悬浮对话预览卡片 (Native Turn Tooltip)
-    let activeTurnTip = null;
-    function hideTurnTooltip() {
-        if (activeTurnTip) {
-            activeTurnTip.remove();
-            activeTurnTip = null;
-        }
-    }
 
-    document.addEventListener('mouseover', (e) => {
-        const btn = e.target.closest('[data-testid="conversation-navigator-turn"]');
-        if (!btn) {
-            hideTurnTooltip();
-            return;
-        }
-
-        const idxStr = btn.getAttribute('data-turn-index');
-        if (idxStr == null) return;
-        const turnIdx = Number(idxStr);
-        const turnNum = turnIdx + 1;
-
-        const turnsData = state.data.turns || [];
-        const turnItem = turnsData[turnIdx] || turnsData.find(t => t.turnNumber === turnNum);
-
-        let text = turnItem?.text || '';
-        let timeStr = '';
-        if (turnItem?.createdAt) {
-            try { timeStr = new Date(turnItem.createdAt).toLocaleTimeString(); } catch (err) {}
-        }
-        if (!timeStr) {
-            timeStr = btn.getAttribute('aria-label') || '';
-        }
-
-        if (!activeTurnTip) {
-            activeTurnTip = document.createElement('div');
-            activeTurnTip.id = 'agy-native-turn-tooltip';
-            document.body.appendChild(activeTurnTip);
-        }
-
-        activeTurnTip.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:12px;">
-                <span style="font-weight:700;color:#10b981;font-size:12px;">#${turnNum} 轮提问</span>
-                <span style="font-size:10px;opacity:0.65;">${timeStr}</span>
-            </div>
-            <div style="font-size:11.5px;line-height:1.45;opacity:0.9;word-break:break-word;max-height:88px;overflow:hidden;">
-                ${(text || `第 ${turnNum} 轮提问`).replace(/</g, '&lt;')}
-            </div>
-        `;
-
-        const rect = btn.getBoundingClientRect();
-        activeTurnTip.style.left = (rect.right + 10) + 'px';
-        activeTurnTip.style.top = Math.max(10, Math.min(window.innerHeight - 110, rect.top - 20)) + 'px';
-    });
-
-    document.addEventListener('mouseout', (e) => {
-        const btn = e.target.closest('[data-testid="conversation-navigator-turn"]');
-        if (btn) {
-            hideTurnTooltip();
-        }
-    });
 
     document.addEventListener('click', (e) => {
         if (state.popoverOpen) {

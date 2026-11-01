@@ -370,7 +370,7 @@ def hot_inject_via_cdp(ui_core_js, bootstrap_data):
         bootstrap_json = json.dumps(bootstrap_data, ensure_ascii=False)
         hot_js = f"""(() => {{
             window.__AGY_UI_ENHANCER_ACTIVE__ = false;
-            ['agy-enhancer-toolbar', 'agy-enhancer-popover', 'agy-enhancer-timeline', 'agy-enhancer-attach-bar', '__agy_enhancer_styles__', '__agy_enhancer_main_script__'].forEach(id => {{
+            ['agy-enhancer-toolbar', 'agy-enhancer-popover', 'agy-enhancer-timeline', 'agy-native-turn-tooltip', 'agy-enhancer-attach-bar', '__agy_enhancer_styles__', '__agy_enhancer_main_script__'].forEach(id => {{
                 const el = document.getElementById(id);
                 if (el) el.remove();
             }});

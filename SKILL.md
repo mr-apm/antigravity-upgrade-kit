@@ -8,7 +8,7 @@ description: Antigravity 一键全自动升级补丁套件。当 Antigravity 官
 当 Google Antigravity 客户端发生版本更新（覆盖了 `resources/app.asar`）后，通过本技能可**一键实现全套环境恢复**：
 1. **GitHub 动态同步**：自动联网检查并拉取 `qqxpee/antigravity2-cn` 官方最新汉化包与字典（网络不可用时自动降级使用本地最新版）；
 2. **深度完整汉化**：自动执行 `localization_engine.js`，汉化软件主界面、顶部菜单、托盘与设置项（保留英文品牌标题 Antigravity）；
-3. **保留 Antigravity 官方原生时间线**：保留并优化 Antigravity 2.0 官方原生自带的对话时间线（`Conversation Navigator`），使用官方底层状态机驱动轮次跳转，彻底避免第三方时间线轮次跳变、概要丢失的问题；
+3. **纯净保留 Antigravity 官方原生时间线**：保留并优化 Antigravity 2.0 官方原生自带的对话时间线（`Conversation Navigator`）及官方悬浮卡片；完全移除任何冗余的自定义 Tooltip，彻底杜绝悬浮卡片重叠问题，使用官方底层状态机驱动轮次跳转，避免第三方时间线轮次跳变、概要丢失；
 4. **UI 增强层注入**：
    - **底部快捷气泡工具栏**：`📦 技能`、`✨ 提示词`、`🔌 MCP`、`📚 知识库`、`● 配额`；
    - **原生技能胶囊徽章**：点击气泡菜单中的技能项，自动在输入框中渲染为与手动敲击 `/` 选择完全一致的原生 `[ <> ] 技能名` 胶囊（BeautifulMention Pill Node），支持退格一键删除；
@@ -58,7 +58,7 @@ python "E:\82-CherryStudio\ALL-Agent-Skills\agy-upgrade-kit\scripts\apply_upgrad
 ## 验证与验收标准
 
 1. **界面汉化**：顶部系统菜单（文件、编辑、查看、帮助）及设置面板已汉化为中文，品牌名保留为英文 `Antigravity`。
-2. **官方原生时间线**：对话左侧/边缘呈现 Antigravity 自带的原生多轮时间线（Conversation Navigator），悬浮和点击跳转精准流畅。
+2. **官方原生时间线**：对话左侧/边缘呈现 Antigravity 自带的原生多轮时间线（Conversation Navigator），悬浮时仅展示原厂官方原生对话卡片（无任何多余或重叠弹窗），点击跳转精准流畅。
 3. **底部气泡工具栏**：输入框底部显示 `📦 技能`、`✨ 提示词`、`🔌 MCP`、`📚 知识库` 等按钮。
 4. **胶囊效果**：点击 `📦 技能` 选择任意技能，输入框中呈现出与手动敲击 `/` 选择完全一致的原生 `[ <> ] 技能名` 胶囊徽章。
 5. **配额面板**：点击底部工具栏配额胶囊，弹窗中各模型百分比进度条与倒计时正常展示。
